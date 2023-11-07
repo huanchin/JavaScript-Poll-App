@@ -88,7 +88,34 @@ const poll = {
 // 會跳出prompt
 poll.registerNewAnswer();
 
-// click 卻不會跳出 prompt
+/**************** 以下皆為錯誤寫法 **************/
+// click 卻不會跳出 prompt： input 被 click event 取代掉了
+// 把 <bind 過的 registerNewAnswer 函數> 給 listener ，等待 click event 發生的時候呼叫，並且自動將 click event object 作為 input 輸入給 <bind 過的 registerNewAnswer 函數>
+// click發生的時候： 執行 <bind過的registerNewAnswer>，但 listener 自行將 event object 作為 input
 document
   .querySelector(".poll")
   .addEventListener("click", poll.registerNewAnswer.bind(poll));
+
+// 沒反應：return 一個 this 綁定 poll 的 registerNewAnswer function，但這個function沒有被call
+// 把 arrow function 給 listener ，等待 click event 發生的時候呼叫 (arrow function)
+// click 發生的時候： 1. bind <registerNewAnswer 函數> (綁定 this 為 poll) 2. 回傳 <bind 過的 registerNewAnswer 函數>
+document
+  .querySelector(".poll")
+  .addEventListener("click", (e) => poll.registerNewAnswer.bind(poll));
+
+// 會有error: 語法錯誤
+document
+  .querySelector(".poll")
+  .addEventListener("click", (e) => poll.registerNewAnswer(e).bind(poll));
+
+// 沒反應：return 一個 this 綁定 poll，並且 input 綁定 event object 的 registerNewAnswer function，但這個function沒有被call
+// click 發生的時候：1. bind <registerNewAnswer 函數> (綁定 this 為 poll, input 為 event object) 2. 回傳 <bind 過的 registerNewAnswer 函數>
+document
+  .querySelector(".poll")
+  .addEventListener("click", (e) => poll.registerNewAnswer.bind(poll, e));
+
+/**************** 正解 **************/
+// click 發生的時候：1. bind <registerNewAnswer 函數> (綁定 this 為 poll) 2. 回傳 <bind 過的 registerNewAnswer 函數> 3. immediately invoke <bind 過的 registerNewAnswer 函數>!!!
+document
+  .querySelector(".poll")
+  .addEventListener("click", (e) => poll.registerNewAnswer.bind(poll)());
